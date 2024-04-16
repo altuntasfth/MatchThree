@@ -7,12 +7,16 @@ namespace _Game.Scripts.Views
     {
         [SerializeField] private GameObject tileSlotPrefab;
         [SerializeField] private Transform tileSlotParent;
+        [SerializeField] private GameObject tilePrefab;
+        [SerializeField] private Transform tileParent;
         [SerializeField] private int width;
         [SerializeField] private int height;
         [SerializeField] private float offset;
         
         public GameObject TileSlotPrefab => tileSlotPrefab;
         public Transform TileSlotParent => tileSlotParent;
+        public GameObject TilePrefab => tilePrefab;
+        public Transform TileParent => tileParent;
         public int Width => width;
         public int Height => height;
         public float Offset => offset;

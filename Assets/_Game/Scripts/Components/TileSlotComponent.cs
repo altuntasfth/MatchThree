@@ -6,6 +6,7 @@ namespace _Game.Scripts.Components
     public class TileSlotComponent : MonoBehaviour, ITileSlotComponent
     {
         public Transform Transform => gameObject.transform;
+        public ITileComponent TileComponent { get; set; }
 
         public void OnGet()
         {

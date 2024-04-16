@@ -2,10 +2,11 @@ using UnityEngine;
 
 namespace _Game.Scripts.Components.Abstractions
 {
-    public interface ITileSlotComponent
+    public interface ITileComponent
     {
+        TileType TileType { get; set;  }
         Transform Transform { get; }
-        ITileComponent TileComponent { get; set; }
+        void Initialize(TileType tileType);
         void OnGet();
         void OnRelease();
         void OnReset();

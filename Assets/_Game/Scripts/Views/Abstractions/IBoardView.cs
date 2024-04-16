@@ -6,6 +6,8 @@ namespace _Game.Scripts.Views.Abstractions
     {
         GameObject TileSlotPrefab { get; }
         Transform TileSlotParent { get; }
+        GameObject TilePrefab { get; }
+        Transform TileParent { get; }
         int Width { get; }
         int Height { get; }
         float Offset { get; }
