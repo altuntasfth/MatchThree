@@ -1,31 +1,22 @@
-using _Game.Scripts.Components.Abstractions;
+using _Game.Scripts.Models;
+using _Game.Scripts.Views.Abstractions;
 using UnityEngine;
 
-namespace _Game.Scripts.Components
+namespace _Game.Scripts.Views
 {
-    public enum TileType
-    {
-        RED,
-        GREEN,
-        BLUE,
-        YELLOW
-    }
-    
-    public class TileComponent : MonoBehaviour, ITileComponent
+    public class TileView : MonoBehaviour, ITileView
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Sprite redSprite;
         [SerializeField] private Sprite greenSprite;
         [SerializeField] private Sprite blueSprite;
         [SerializeField] private Sprite yellowSprite;
-
-        public TileType TileType { get; set; }
+        
         public Transform Transform => gameObject.transform;
-
+        
         public void Initialize(TileType tileType)
         {
-            TileType = tileType;
-            switch (TileType)
+            switch (tileType)
             {
                 case TileType.RED:
                     spriteRenderer.sprite = redSprite;
@@ -41,7 +32,7 @@ namespace _Game.Scripts.Components
                     break;
             }
         }
-
+        
         public void OnGet()
         {
             gameObject.SetActive(true);

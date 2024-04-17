@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using _Game.Scripts.Components;
 using _Game.Scripts.Components.Abstractions;
+using _Game.Scripts.Models;
 using _Game.Scripts.Models.Abstractions;
 using _Game.Scripts.Presenters.Abstractions;
 using _Game.Scripts.Utilities;
@@ -13,7 +15,7 @@ namespace _Game.Scripts.Presenters
     public class BoardPresenter : IBoardPresenter
     {
         private ObjectPool<ITileSlotComponent> _tileSlotPool;
-        private ObjectPool<ITileComponent> _tilePool;
+        private ObjectPool<ITileView> _tilePool;
 
         private IBoardView _boardView;
         private IBoard _board;
@@ -31,7 +33,7 @@ namespace _Game.Scripts.Presenters
             GenerateTileSlots();
             
             GenerateTilePool();
-            FillTileSlots();
+            GenerateTiles();
         }
         
         private void GenerateTileSlotPool()
@@ -42,7 +44,7 @@ namespace _Game.Scripts.Presenters
         
         private void GenerateTilePool()
         {
-            _tilePool = Pool.GeneratePool<ITileComponent>(_boardView.TilePrefab, _boardView.TileParent, OnGetTile, 
+            _tilePool = Pool.GeneratePool<ITileView>(_boardView.TilePrefab, _boardView.TileParent, OnGetTile, 
                 OnReleaseTile, OnResetTile, 100);
         }
 
@@ -55,6 +57,7 @@ namespace _Game.Scripts.Presenters
                 for (int y = 0; y < _boardView.Height; y++)
                 {
                     var tileSlot = _tileSlotPool.Get();
+                    tileSlot.Initialize(x, y);
                     tileSlot.Transform.localPosition = new Vector3(x * _boardView.Offset, y * _boardView.Offset, 0);
                     _board.TileSlots[x, y] = tileSlot;
                 }
@@ -70,48 +73,53 @@ namespace _Game.Scripts.Presenters
             Camera.main.orthographicSize = verticalSize > horizontalSize ? verticalSize : horizontalSize;
         }
         
-        private void FillTileSlots()
+        private void GenerateTiles()
         {
+            _board.TilePresenters = new ITilePresenter[_boardView.Width, _boardView.Height];
+            
             for (int x = 0; x < _boardView.Width; x++)
             {
                 for (int y = 0; y < _boardView.Height; y++)
                 {
-                    ITileComponent tile;
-                    bool isSameColorAsNeighbours;
-                    do
-                    {
-                        tile = _tilePool.Get();
-                        tile.Initialize(GetRandomTileType());
-                        
-                        isSameColorAsNeighbours = IsSameColorAsNeighbours(x, y, tile.TileType);
-                        if (isSameColorAsNeighbours)
-                        {
-                            tile.OnRelease();
-                        }
-
-                    } while (isSameColorAsNeighbours);
+                    var tileView = _tilePool.Get();
+                    var tilePresenter = new TilePresenter(tileView);
+                    _board.TilePresenters[x, y] = tilePresenter;
+                    var tileType = GetTileType(x, y);
+                    tilePresenter.Initialize(tileType, x, y);
 
                     var tileSlot = _board.TileSlots[x, y];
-                    tileSlot.TileComponent = tile;
-
-                    tile.Transform.position = tileSlot.Transform.position;
+                    tileView.Transform.position = tileSlot.Transform.position;
                 }
+            }
+        }
+        
+        private TileType GetTileType(int x, int y)
+        {
+            var randomTileType = GetRandomTileType();
+
+            if (IsSameColorAsNeighbours(x, y, randomTileType))
+            {
+                return GetTileType(x, y);
+            }
+            else
+            {
+                return randomTileType;
             }
         }
 
         private bool IsSameColorAsNeighbours(int x, int y, TileType tileType)
         {
-            if (x > 1 && _board.TileSlots[x - 1, y].TileComponent != null && _board.TileSlots[x - 2, y].TileComponent != null)
+            if (x > 1 && _board.TilePresenters[x - 1, y] != null && _board.TileSlots[x - 2, y] != null)
             {
-                if (_board.TileSlots[x - 1, y].TileComponent.TileType == tileType && _board.TileSlots[x - 2, y].TileComponent.TileType == tileType)
+                if (_board.TilePresenters[x - 1, y].IsTileType(tileType) && _board.TilePresenters[x - 2, y].IsTileType(tileType))
                 {
                     return true;
                 }
             }
 
-            if (y > 1 && _board.TileSlots[x, y - 1].TileComponent != null && _board.TileSlots[x, y - 2].TileComponent != null)
+            if (y > 1 && _board.TilePresenters[x, y - 1] != null && _board.TilePresenters[x, y - 2] != null)
             {
-                if (_board.TileSlots[x, y - 1].TileComponent.TileType == tileType && _board.TileSlots[x, y - 2].TileComponent.TileType == tileType)
+                if (_board.TilePresenters[x, y - 1].IsTileType(tileType) && _board.TilePresenters[x, y - 2].IsTileType(tileType))
                 {
                     return true;
                 }
@@ -151,7 +159,7 @@ namespace _Game.Scripts.Presenters
         
         private void OnGetTile<T>(T obj) where T : class
         {
-            if (obj is ITileComponent tile)
+            if (obj is ITileView tile)
             {
                 tile.OnGet();
             }
@@ -159,7 +167,7 @@ namespace _Game.Scripts.Presenters
         
         private void OnReleaseTile<T>(T obj) where T : class
         {
-            if (obj is ITileComponent tile)
+            if (obj is ITileView tile)
             {
                 tile.OnRelease();
             }
@@ -167,7 +175,7 @@ namespace _Game.Scripts.Presenters
         
         private void OnResetTile<T>(T obj) where T : class
         {
-            if (obj is ITileComponent tile)
+            if (obj is ITileView tile)
             {
                 tile.OnReset();
             }

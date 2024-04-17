@@ -1,12 +1,13 @@
+using _Game.Scripts.Models;
 using UnityEngine;
 
-namespace _Game.Scripts.Components.Abstractions
+namespace _Game.Scripts.Views.Abstractions
 {
-    public interface ITileComponent
+    public interface ITileView
     {
-        TileType TileType { get; set;  }
         Transform Transform { get; }
         void Initialize(TileType tileType);
+        
         void OnGet();
         void OnRelease();
         void OnReset();

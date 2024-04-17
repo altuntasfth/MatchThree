@@ -6,7 +6,14 @@ namespace _Game.Scripts.Components
     public class TileSlotComponent : MonoBehaviour, ITileSlotComponent
     {
         public Transform Transform => gameObject.transform;
-        public ITileComponent TileComponent { get; set; }
+        public int XIndex { get; private set; }
+        public int YIndex { get; private set; }
+
+        public void Initialize(int xIndex, int yIndex)
+        {
+            XIndex = xIndex;
+            YIndex = yIndex;
+        }
 
         public void OnGet()
         {
