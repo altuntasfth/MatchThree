@@ -26,6 +26,7 @@ namespace _Game.Scripts.Presenters
         
         public void Initialize()
         {
+            SetupCamera();
             GenerateTileSlotPool();
             GenerateTileSlots();
             
@@ -58,6 +59,15 @@ namespace _Game.Scripts.Presenters
                     _board.TileSlots[x, y] = tileSlot;
                 }
             }
+        }
+
+        private void SetupCamera()
+        {
+            Camera.main.transform.position = new Vector3((_boardView.Width - 1f) / 2f, (_boardView.Height - 1f) / 2f, -10f);
+            var aspectRatio = (float)Screen.width / Screen.height;
+            var verticalSize = (float)_boardView.Height / 2f + _boardView.BoardSize;
+            var horizontalSize = ((float)_boardView.Width / 2f + _boardView.BoardSize) / aspectRatio;
+            Camera.main.orthographicSize = verticalSize > horizontalSize ? verticalSize : horizontalSize;
         }
         
         private void FillTileSlots()

@@ -12,6 +12,7 @@ namespace _Game.Scripts.Views
         [SerializeField] private int width;
         [SerializeField] private int height;
         [SerializeField] private float offset;
+        [SerializeField] private int boardSize;
         
         public GameObject TileSlotPrefab => tileSlotPrefab;
         public Transform TileSlotParent => tileSlotParent;
@@ -20,5 +21,6 @@ namespace _Game.Scripts.Views
         public int Width => width;
         public int Height => height;
         public float Offset => offset;
+        public float BoardSize => boardSize;
     }
 }

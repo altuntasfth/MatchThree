@@ -11,5 +11,6 @@ namespace _Game.Scripts.Views.Abstractions
         int Width { get; }
         int Height { get; }
         float Offset { get; }
+        float BoardSize { get; }
     }
 }
