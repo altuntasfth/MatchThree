@@ -6,7 +6,9 @@ using _Game.Scripts.Models;
 using _Game.Scripts.Models.Abstractions;
 using _Game.Scripts.Presenters.Abstractions;
 using _Game.Scripts.Utilities;
+using _Game.Scripts.Views;
 using _Game.Scripts.Views.Abstractions;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -24,6 +26,7 @@ namespace _Game.Scripts.Presenters
 
         private IBoardView _boardView;
         private IBoard _board;
+        private bool isSwiping;
         
         public BoardPresenter(IBoardView boardView, IBoard board)
         {
@@ -39,6 +42,128 @@ namespace _Game.Scripts.Presenters
             
             GenerateTilePool();
             GenerateTiles();
+        }
+        
+        public void SwipeTiles(ITilePresenter tile1)
+        {
+            if (isSwiping ||
+                tile1.SwipeDirection == SwipeDirection.None ||
+                tile1.SwipeDirection == SwipeDirection.Corner)
+            {
+                return;
+            }
+            
+            SwipeTilesAsync(tile1).Forget();
+        }
+        
+        private async UniTask SwipeTilesAsync(ITilePresenter tile1)
+        {
+            isSwiping = true;
+            
+            (int, int) targetIndexes = tile1.SwipeDirection switch
+            {
+                SwipeDirection.Left => (tile1.GetXIndex() - 1, tile1.GetYIndex()),
+                SwipeDirection.Right => (tile1.GetXIndex() + 1, tile1.GetYIndex()),
+                SwipeDirection.Up => (tile1.GetXIndex(), tile1.GetYIndex() + 1),
+                SwipeDirection.Down => (tile1.GetXIndex(), tile1.GetYIndex() - 1),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            if (targetIndexes.Item1 < 0 || targetIndexes.Item1 >= _boardView.Width || 
+                targetIndexes.Item2 < 0 || targetIndexes.Item2 >= _boardView.Height)
+            {
+                tile1.SwipeDirection = SwipeDirection.None;
+                isSwiping = false;
+                return;
+            }
+            
+            var tile2 = _board.TileProps[targetIndexes.Item1, targetIndexes.Item2].TilePresenter;
+            await ReplaceTilesAsync(tile1, tile2);
+            
+            var matches = FindMatches();
+            if (matches.Count > 0)
+            {
+                
+            }
+            else
+            {
+                await UniTask.Delay(1000);
+                await ReplaceTilesAsync(tile1, tile2);
+            }
+
+            tile1.SwipeDirection = SwipeDirection.None;
+            isSwiping = false;
+        }
+        
+        private async UniTask ReplaceTilesAsync(ITilePresenter tile1, ITilePresenter tile2)
+        {
+            var task1 = tile1.SwipeToAsync(tile2.GetPosition(), 0.1f);
+            var task2 = tile2.SwipeToAsync(tile1.GetPosition(), 0.1f);
+            await UniTask.WhenAll(task1, task2);
+            
+            var tile1Prop = _board.TileProps[tile1.GetXIndex(), tile1.GetYIndex()];
+            var tile2Prop = _board.TileProps[tile2.GetXIndex(), tile2.GetYIndex()];
+            
+            _board.TileProps[tile1.GetXIndex(), tile1.GetYIndex()] = tile2Prop;
+            _board.TileProps[tile2.GetXIndex(), tile2.GetYIndex()] = tile1Prop;
+            
+            tile1Prop.TilePresenter = tile2;
+            tile2Prop.TilePresenter = tile1;
+            
+            var tile1TempIndexes = (tile1.GetXIndex(), tile1.GetYIndex());
+            tile1Prop.Tile.SetPosition(tile2.GetXIndex(), tile2.GetYIndex());
+            tile2Prop.Tile.SetPosition(tile1TempIndexes.Item1, tile1TempIndexes.Item2);
+        }
+        
+        public List<List<ITilePresenter>> FindMatches()
+        {
+            var matches = new List<List<ITilePresenter>>();
+
+            // Check for horizontal matches
+            for (int y = 0; y < _boardView.Height; y++)
+            {
+                var rowMatches = new List<ITilePresenter>();
+                
+                for (int x = 0; x < _boardView.Width - 2; x++)
+                {
+                    var tile1Type = _board.TileProps[x, y].Tile.TileType;
+                    var tile2Type = _board.TileProps[x + 1, y].Tile.TileType;
+                    var tile3Type = _board.TileProps[x + 2, y].Tile.TileType;
+                    
+                    if (tile1Type == tile2Type && tile1Type == tile3Type)
+                    {
+                        rowMatches.Add(_board.TileProps[x, y].TilePresenter);
+                        rowMatches.Add(_board.TileProps[x + 1, y].TilePresenter);
+                        rowMatches.Add(_board.TileProps[x + 2, y].TilePresenter);
+                    }
+                }
+                
+                if (rowMatches.Count >= 3)
+                {
+                    matches.Add(rowMatches);
+                }
+            }
+
+            // Check for vertical matches
+            for (int x = 0; x < _boardView.Width; x++)
+            {
+                for (int y = 0; y < _boardView.Height - 2; y++)
+                {
+                    if (_board.TileProps[x, y].TilePresenter.GetTileType() == _board.TileProps[x, y + 1].TilePresenter.GetTileType() &&
+                        _board.TileProps[x, y].TilePresenter.GetTileType() == _board.TileProps[x, y + 2].TilePresenter.GetTileType())
+                    {
+                        var match = new List<ITilePresenter>
+                        {
+                            _board.TileProps[x, y].TilePresenter,
+                            _board.TileProps[x, y + 1].TilePresenter,
+                            _board.TileProps[x, y + 2].TilePresenter
+                        };
+                        matches.Add(match);
+                    }
+                }
+            }
+
+            return matches;
         }
 
         public ITilePresenter GetTile(Vector2 eventDataPosition)
@@ -106,6 +231,7 @@ namespace _Game.Scripts.Presenters
                     _board.TileProps[x, y] = new TileProp(tile, tilePresenter);
                     var tileType = GetTileType(x, y);
                     tilePresenter.Initialize(tileType.Item1, tileType.Item2, x, y);
+                    tilePresenter.OnSwipeAction += SwipeTiles;
 
                     var tileSlot = _board.TileSlots[x, y];
                     tileView.Transform.position = tileSlot.Transform.position;

@@ -1,4 +1,5 @@
 using _Game.Scripts.Models.Abstractions;
+using UnityEngine;
 
 namespace _Game.Scripts.Models
 {
@@ -12,6 +13,7 @@ namespace _Game.Scripts.Models
     
     public class Tile : ITile
     {
+        public bool IsMoving { get; set; }
         public TileType TileType { get; set; }
         public int XIndex { get; set; }
         public int YIndex { get; set; }
@@ -20,6 +22,11 @@ namespace _Game.Scripts.Models
         {
             XIndex = xIndex;
             YIndex = yIndex;
+        }
+
+        public Vector3 GetPosition()
+        {
+            return Vector3.right * XIndex + Vector3.up * YIndex;
         }
     }
 }
