@@ -9,6 +9,7 @@ namespace _Game.Scripts.Managers
 {
     public class GameManager : MonoBehaviour
     {
+        [SerializeField] private PlayerManager playerManager;
         [SerializeField] private BoardView boardView;
         
         private IBoardPresenter _boardPresenter;
@@ -17,6 +18,7 @@ namespace _Game.Scripts.Managers
         {
             _boardPresenter = new BoardPresenter(boardView, new Board());
             _boardPresenter.Initialize();
+            playerManager.Initialize(_boardPresenter);
         }
     }
 }

@@ -14,6 +14,11 @@ namespace _Game.Scripts.Presenters
 {
     public class BoardPresenter : IBoardPresenter
     {
+        private const string YellowSpriteName = "dropY";
+        private const string RedSpriteName = "dropR";
+        private const string GreenSpriteName = "dropG";
+        private const string BlueSpriteName = "dropB";
+        
         private ObjectPool<ITileSlotComponent> _tileSlotPool;
         private ObjectPool<ITileView> _tilePool;
 
@@ -35,7 +40,21 @@ namespace _Game.Scripts.Presenters
             GenerateTilePool();
             GenerateTiles();
         }
-        
+
+        public ITilePresenter GetTile(Vector2 eventDataPosition)
+        {
+            var worldPosition = Camera.main.ScreenToWorldPoint(eventDataPosition);
+            var tileSlot = GetTileSlot(worldPosition);
+            return _board.TileProps[tileSlot.XIndex, tileSlot.YIndex].TilePresenter;
+        }
+
+        private ITileSlotComponent GetTileSlot(Vector3 worldPosition)
+        {
+            var x = Mathf.RoundToInt(worldPosition.x);
+            var y = Mathf.RoundToInt(worldPosition.y);
+            return _board.TileSlots[x, y];
+        }
+
         private void GenerateTileSlotPool()
         {
             _tileSlotPool = Pool.GeneratePool<ITileSlotComponent>(_boardView.TileSlotPrefab, _boardView.TileSlotParent, OnGetTileSlot, 
@@ -75,17 +94,18 @@ namespace _Game.Scripts.Presenters
         
         private void GenerateTiles()
         {
-            _board.TilePresenters = new ITilePresenter[_boardView.Width, _boardView.Height];
+            _board.TileProps = new TileProp[_boardView.Width, _boardView.Height];
             
             for (int x = 0; x < _boardView.Width; x++)
             {
                 for (int y = 0; y < _boardView.Height; y++)
                 {
                     var tileView = _tilePool.Get();
-                    var tilePresenter = new TilePresenter(tileView);
-                    _board.TilePresenters[x, y] = tilePresenter;
+                    var tile = new Tile();
+                    var tilePresenter = new TilePresenter(tileView, tile);
+                    _board.TileProps[x, y] = new TileProp(tile, tilePresenter);
                     var tileType = GetTileType(x, y);
-                    tilePresenter.Initialize(tileType, x, y);
+                    tilePresenter.Initialize(tileType.Item1, tileType.Item2, x, y);
 
                     var tileSlot = _board.TileSlots[x, y];
                     tileView.Transform.position = tileSlot.Transform.position;
@@ -93,7 +113,7 @@ namespace _Game.Scripts.Presenters
             }
         }
         
-        private TileType GetTileType(int x, int y)
+        private (TileType, string) GetTileType(int x, int y)
         {
             var randomTileType = GetRandomTileType();
 
@@ -103,23 +123,34 @@ namespace _Game.Scripts.Presenters
             }
             else
             {
-                return randomTileType;
+                var spriteName = randomTileType switch
+                {
+                    TileType.YELLOW => YellowSpriteName,
+                    TileType.RED => RedSpriteName,
+                    TileType.GREEN => GreenSpriteName,
+                    TileType.BLUE => BlueSpriteName,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                
+                return (randomTileType, spriteName);
             }
         }
 
         private bool IsSameColorAsNeighbours(int x, int y, TileType tileType)
         {
-            if (x > 1 && _board.TilePresenters[x - 1, y] != null && _board.TileSlots[x - 2, y] != null)
+            if (x > 1 && !_board.TileProps[x - 1, y].IsNull() && !_board.TileProps[x - 2, y].IsNull())
             {
-                if (_board.TilePresenters[x - 1, y].IsTileType(tileType) && _board.TilePresenters[x - 2, y].IsTileType(tileType))
+                if (_board.TileProps[x - 1, y].TilePresenter.IsTileType(tileType) && 
+                    _board.TileProps[x - 2, y].TilePresenter.IsTileType(tileType))
                 {
                     return true;
                 }
             }
 
-            if (y > 1 && _board.TilePresenters[x, y - 1] != null && _board.TilePresenters[x, y - 2] != null)
+            if (y > 1 && !_board.TileProps[x, y - 1].IsNull() && !_board.TileProps[x, y - 2].IsNull())
             {
-                if (_board.TilePresenters[x, y - 1].IsTileType(tileType) && _board.TilePresenters[x, y - 2].IsTileType(tileType))
+                if (_board.TileProps[x, y - 1].TilePresenter.IsTileType(tileType) && 
+                    _board.TileProps[x, y - 2].TilePresenter.IsTileType(tileType))
                 {
                     return true;
                 }
