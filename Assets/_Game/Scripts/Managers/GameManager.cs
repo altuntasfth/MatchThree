@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using _Game.Scripts.Models;
 using _Game.Scripts.Presenters;
 using _Game.Scripts.Presenters.Abstractions;
@@ -14,12 +15,13 @@ namespace _Game.Scripts.Managers
         
         [SerializeField] private int width = 8;
         [SerializeField] private int height = 8;
+        [SerializeField] private List<int> nonSpawnerRows = new List<int> {2, 6};
         
         private IBoardPresenter _boardPresenter;
 
         private void Start()
         {
-            _boardPresenter = new BoardPresenter(boardView, new Board(width, height));
+            _boardPresenter = new BoardPresenter(boardView, new Board(width, height, nonSpawnerRows));
             _boardPresenter.Initialize();
             playerManager.Initialize(_boardPresenter);
         }

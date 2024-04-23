@@ -8,6 +8,7 @@ namespace _Game.Scripts.Models.Abstractions
 {
     public interface IBoard
     {
+        List<int> NonSpawnerRows { get; }
         ITileSlotComponent[,] TileSlots { get; set; }
         TileProp[,] TileProps { get; set; }
         int Width { get; }

@@ -14,6 +14,7 @@ namespace _Game.Scripts.Models
     
     public class Tile : ITile
     {
+        public bool IsSpawner { get; set; }
         public bool IsMoving { get; set; }
         public TileColor TileColor { get; set; }
         public int XIndex { get; set; }

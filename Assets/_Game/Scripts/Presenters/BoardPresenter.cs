@@ -117,24 +117,27 @@ namespace _Game.Scripts.Presenters
             var refillTaskList = new List<UniTask>();
             for (int i = 0; i < _board.Width; i++)
             {
-                for (int j = 0; j < _board.Height; j++)
+                if (!_board.NonSpawnerRows.Contains(i))
                 {
-                    if (_board.TileProps[i, j].TilePresenter == null)
+                    for (int j = 0; j < _board.Height; j++)
                     {
-                        var piece = FillRandomAt(i, j, falseYOffset, moveTime);
-                        refillTaskList.Add(piece);
-                        iterations = 0;
-
-                        while (_board.HasMatchOnFill(i, j))
+                        if (_board.TileProps[i, j].TilePresenter == null)
                         {
-                            _board.ClearPieceAt(i, j);
-                            piece = FillRandomAt(i, j, falseYOffset, moveTime);
+                            var piece = FillRandomAt(i, j, falseYOffset, moveTime);
                             refillTaskList.Add(piece);
-                            iterations++;
+                            iterations = 0;
 
-                            if (iterations >= maxInterations)
+                            while (_board.HasMatchOnFill(i, j))
                             {
-                                break;
+                                _board.ClearPieceAt(i, j);
+                                piece = FillRandomAt(i, j, falseYOffset, moveTime);
+                                refillTaskList.Add(piece);
+                                iterations++;
+
+                                if (iterations >= maxInterations)
+                                {
+                                    break;
+                                }
                             }
                         }
                     }

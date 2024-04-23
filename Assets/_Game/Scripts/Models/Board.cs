@@ -29,13 +29,15 @@ namespace _Game.Scripts.Models
     
     public class Board : IBoard
     {
+        public List<int> NonSpawnerRows { get; } = new List<int>();
         public ITileSlotComponent[,] TileSlots { get; set; }
         public TileProp[,] TileProps { get; set; }
         public int Width { get; }
         public int Height { get; }
         
-        public Board(int width, int height)
+        public Board(int width, int height, List<int> nonSpawnerRows)
         {
+            NonSpawnerRows = nonSpawnerRows;
             Width = width;
             Height = height;
             TileSlots = new ITileSlotComponent[Width, Height];

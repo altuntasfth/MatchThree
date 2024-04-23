@@ -4,6 +4,7 @@ namespace _Game.Scripts.Models.Abstractions
 {
     public interface ITile
     {
+        bool IsSpawner { get; set; }
         bool IsMoving { get; set; }
         TileColor TileColor { get; set; }
         int XIndex { get; set; }
