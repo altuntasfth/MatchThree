@@ -10,7 +10,6 @@ namespace _Game.Scripts.Managers
 {
     public class GameManager : MonoBehaviour
     {
-        [SerializeField] private PlayerManager playerManager;
         [SerializeField] private BoardView boardView;
         
         [SerializeField] private int width = 8;
@@ -23,7 +22,6 @@ namespace _Game.Scripts.Managers
         {
             _boardPresenter = new BoardPresenter(boardView, new Board(width, height, nonSpawnerRows));
             _boardPresenter.Initialize();
-            playerManager.Initialize(_boardPresenter);
         }
     }
 }
