@@ -12,11 +12,14 @@ namespace _Game.Scripts.Managers
         [SerializeField] private PlayerManager playerManager;
         [SerializeField] private BoardView boardView;
         
+        [SerializeField] private int width = 8;
+        [SerializeField] private int height = 8;
+        
         private IBoardPresenter _boardPresenter;
 
         private void Start()
         {
-            _boardPresenter = new BoardPresenter(boardView, new Board());
+            _boardPresenter = new BoardPresenter(boardView, new Board(width, height));
             _boardPresenter.Initialize();
             playerManager.Initialize(_boardPresenter);
         }

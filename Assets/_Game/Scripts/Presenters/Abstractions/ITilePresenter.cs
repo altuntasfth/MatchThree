@@ -15,9 +15,10 @@ namespace _Game.Scripts.Presenters.Abstractions
         TileType GetTileType();
         void Initialize(TileType tileType, string spriteName, int xIndex, int yIndex);
         Vector3 GetPosition();
-        UniTask SwipeToAsync(Vector3 targetPosition, float duration, CancellationToken cancellationToken = default);
+        UniTask SwipeToAsync(Vector3 targetPosition, CancellationToken cancellationToken = default);
         SwipeDirection SwipeDirection { get; set; }
         int GetXIndex();
         int GetYIndex();
+        UniTask ScaleDownAsync(CancellationToken cancellationToken = default);
     }
 }

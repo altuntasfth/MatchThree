@@ -8,7 +8,8 @@ namespace _Game.Scripts.Models
         RED,
         GREEN,
         BLUE,
-        YELLOW
+        YELLOW,
+        NONE
     }
     
     public class Tile : ITile

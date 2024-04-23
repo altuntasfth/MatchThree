@@ -9,5 +9,8 @@ namespace _Game.Scripts.Models.Abstractions
     {
         ITileSlotComponent[,] TileSlots { get; set; }
         TileProp[,] TileProps { get; set; }
+        int Width { get; }
+        int Height { get; }
+        List<ITilePresenter> FindMatchesAt(int x, int y, int minLength = 3);
     }
 }

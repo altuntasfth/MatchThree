@@ -77,14 +77,16 @@ namespace _Game.Scripts.Presenters
             return _tile.GetPosition();
         }
 
-        public async UniTask SwipeToAsync(Vector3 targetPosition, float duration, CancellationToken cancellationToken = default)
+        public async UniTask SwipeToAsync(Vector3 targetPosition, CancellationToken cancellationToken = default)
         {
             _tile.IsMoving = true;
-            
-            await _tileView.Transform.DOMove(targetPosition, duration).SetEase(Ease.Linear)
-                .ToUniTask(cancellationToken: cancellationToken);
-            
+            await _tileView.SwipeToAsync(targetPosition, cancellationToken);
             _tile.IsMoving = false;
+        }
+        
+        public async UniTask ScaleDownAsync(CancellationToken cancellationToken = default)
+        {
+            await _tileView.ScaleDownAsync(cancellationToken);
         }
 
         private void CalculateSwipeAngle()

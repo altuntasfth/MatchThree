@@ -1,6 +1,9 @@
 using System;
+using System.Threading;
 using _Game.Scripts.Models;
 using _Game.Scripts.Views.Abstractions;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.U2D;
@@ -32,6 +35,10 @@ namespace _Game.Scripts.Views
 
         [Header("Parameters"), Space(10)] [SerializeField]
         private float angleOffset = 30f;
+        private float swipeToDuration = 0.1f;
+        private Ease swipeToEase = Ease.Linear;
+        private float scaleDownDuration = 0.1f;
+        private Ease scaleDownEase = Ease.Linear;
 
         [SerializeField] private float swipeThreshold = 20f;
 
@@ -41,9 +48,23 @@ namespace _Game.Scripts.Views
         {
             spriteRenderer.sprite = spriteAtlas.GetSprite(spriteName);
         }
+        
+        public async UniTask SwipeToAsync(Vector3 targetPosition, CancellationToken cancellationToken)
+        {
+            await Transform.DOMove(targetPosition, swipeToDuration).SetEase(swipeToEase)
+                .ToUniTask(cancellationToken: cancellationToken);
+        }
+        
+        public async UniTask ScaleDownAsync(CancellationToken cancellationToken = default)
+        {
+            await Transform.DOScale(0f, scaleDownDuration).SetEase(scaleDownEase)
+                .ToUniTask(cancellationToken: cancellationToken);
+            OnRelease();
+        }
 
         public void OnGet()
         {
+            transform.localScale = Vector3.one;
             gameObject.SetActive(true);
         }
 
