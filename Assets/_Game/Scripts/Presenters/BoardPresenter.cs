@@ -268,7 +268,7 @@ namespace _Game.Scripts.Presenters
             }
         }
         
-        private (TileType, string) GetTileType(int x, int y, bool isInitial)
+        private (TileColor, string) GetTileType(int x, int y, bool isInitial)
         {
             var randomTileType = GetRandomTileType();
 
@@ -280,10 +280,10 @@ namespace _Game.Scripts.Presenters
             {
                 var spriteName = randomTileType switch
                 {
-                    TileType.YELLOW => YellowSpriteName,
-                    TileType.RED => RedSpriteName,
-                    TileType.GREEN => GreenSpriteName,
-                    TileType.BLUE => BlueSpriteName,
+                    TileColor.YELLOW => YellowSpriteName,
+                    TileColor.RED => RedSpriteName,
+                    TileColor.GREEN => GreenSpriteName,
+                    TileColor.BLUE => BlueSpriteName,
                     _ => throw new ArgumentOutOfRangeException()
                 };
                 
@@ -291,7 +291,7 @@ namespace _Game.Scripts.Presenters
             }
         }
 
-        private bool IsSameColorAsNeighbours(int x, int y, TileType tileType)
+        private bool IsSameColorAsNeighbours(int x, int y, TileColor tileType)
         {
             if (x > 1 && !_board.TileProps[x - 1, y].IsNull() && !_board.TileProps[x - 2, y].IsNull())
             {
@@ -314,9 +314,9 @@ namespace _Game.Scripts.Presenters
             return false;
         }
 
-        private TileType GetRandomTileType()
+        private TileColor GetRandomTileType()
         {
-            return (TileType)Random.Range(0, Enum.GetValues(typeof(TileType)).Length - 1);
+            return (TileColor)Random.Range(0, Enum.GetValues(typeof(TileColor)).Length - 1);
         }
 
         private void OnGetTileSlot<T>(T obj) where T : class

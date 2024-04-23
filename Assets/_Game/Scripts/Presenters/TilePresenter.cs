@@ -55,19 +55,19 @@ namespace _Game.Scripts.Presenters
             _tileView.OnEndDragAction += OnEndDrag;
         }
         
-        public bool IsTileType(TileType tileType)
+        public bool IsTileType(TileColor tileType)
         {
-            return _tile.TileType == tileType;
+            return _tile.TileColor == tileType;
         }
 
-        public TileType GetTileType()
+        public TileColor GetTileType()
         {
-            return _tile.TileType;
+            return _tile.TileColor;
         }
 
-        public void Initialize(TileType tileType, string spriteName, int xIndex, int yIndex)
+        public void Initialize(TileColor tileType, string spriteName, int xIndex, int yIndex)
         {
-            _tile.TileType = tileType;
+            _tile.TileColor = tileType;
             _tile.SetPosition(xIndex, yIndex);
             _tileView.Initialize(spriteName);
         }

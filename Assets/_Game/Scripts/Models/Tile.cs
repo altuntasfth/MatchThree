@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace _Game.Scripts.Models
 {
-    public enum TileType
+    public enum TileColor
     {
         RED,
         GREEN,
@@ -15,7 +15,7 @@ namespace _Game.Scripts.Models
     public class Tile : ITile
     {
         public bool IsMoving { get; set; }
-        public TileType TileType { get; set; }
+        public TileColor TileColor { get; set; }
         public int XIndex { get; set; }
         public int YIndex { get; set; }
         

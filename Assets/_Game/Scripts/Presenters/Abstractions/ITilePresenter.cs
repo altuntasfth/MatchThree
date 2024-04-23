@@ -11,9 +11,9 @@ namespace _Game.Scripts.Presenters.Abstractions
     public interface ITilePresenter
     {
         Action<ITilePresenter> OnSwipeAction { get; set; }
-        bool IsTileType(TileType tileType);
-        TileType GetTileType();
-        void Initialize(TileType tileType, string spriteName, int xIndex, int yIndex);
+        bool IsTileType(TileColor tileType);
+        TileColor GetTileType();
+        void Initialize(TileColor tileType, string spriteName, int xIndex, int yIndex);
         Vector3 GetPosition();
         void SetPosition(int xIndex, int yIndex);
         UniTask SwipeToAsync(Vector3 targetPosition, CancellationToken cancellationToken = default);
