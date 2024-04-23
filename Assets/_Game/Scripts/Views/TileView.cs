@@ -59,7 +59,12 @@ namespace _Game.Scripts.Views
         {
             await Transform.DOScale(0f, scaleDownDuration).SetEase(scaleDownEase)
                 .ToUniTask(cancellationToken: cancellationToken);
-            OnRelease();
+        }
+        
+        public async UniTask MoveDownAsync(int newYPosition, float collapseTime, CancellationToken cancellationToken = default)
+        {
+            await Transform.DOMoveY(newYPosition, collapseTime).SetEase(Ease.Linear)
+                .ToUniTask(cancellationToken: cancellationToken);
         }
 
         public void OnGet()

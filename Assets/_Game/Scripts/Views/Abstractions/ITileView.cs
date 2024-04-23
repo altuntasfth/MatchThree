@@ -22,5 +22,6 @@ namespace _Game.Scripts.Views.Abstractions
         Action<PointerEventData> OnEndDragAction { get; set; }
         UniTask SwipeToAsync(Vector3 targetPosition, CancellationToken cancellationToken);
         UniTask ScaleDownAsync(CancellationToken cancellationToken = default);
+        UniTask MoveDownAsync(int newYPosition, float collapseTime, CancellationToken cancellationToken = default);
     }
 }

@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using _Game.Scripts.Components.Abstractions;
 using _Game.Scripts.Models.Abstractions;
 using _Game.Scripts.Presenters.Abstractions;
 using _Game.Scripts.Views.Abstractions;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace _Game.Scripts.Models
@@ -52,6 +54,21 @@ namespace _Game.Scripts.Models
             return combinedMatches;
         }
         
+        public List<ITilePresenter> FindAllMatches()
+        {
+            var combinedMatches = new List<ITilePresenter>();
+
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    var matches = FindMatchesAt(i, j);
+                    combinedMatches = combinedMatches.Union(matches).ToList();
+                }
+            }
+        
+            return combinedMatches;
+        }
         private List<ITilePresenter> FindMatchesAt(List<ITilePresenter> tilePresenters, int minLength = 3)
         {
             var matches = new List<ITilePresenter>();
@@ -117,9 +134,11 @@ namespace _Game.Scripts.Models
                     break;
                 else
                 {
-                    if (nextPiece.IsTileType(startPiece.GetTileType()) && 
-                        !matches.Contains(nextPiece) && !nextPiece.IsTileType(TileType.NONE))
+                    if (nextPiece.IsTileType(startPiece.GetTileType()) &&
+                        !matches.Contains(nextPiece))
+                    {
                         matches.Add(nextPiece);
+                    }
                     else
                         break;
                 }
@@ -133,15 +152,116 @@ namespace _Game.Scripts.Models
             return (x >= 0 && x < Width && y >= 0 && y < Height);
         }
         
-        
-        
-        private List<ITilePresenter> CollapseColumn(List<int> columnsToCollapse)
+        public bool HasMatchOnFill(int x, int y, int minLength = 3)
+        {
+            var leftMatches = FindMatches(x, y, new Vector2(-1, 0), minLength);
+            var downwardMatches = FindMatches(x, y, new Vector2(0, -1), minLength);
+
+            leftMatches ??= new List<ITilePresenter>();
+            downwardMatches ??= new List<ITilePresenter>();
+
+            return (leftMatches.Count > 0 || downwardMatches.Count > 0);
+
+        }
+
+        public async UniTask ClearAndCollapseAsync(List<ITilePresenter> gamePieces)
         {
             var movingPieces = new List<ITilePresenter>();
+            var matches = new List<ITilePresenter>();
+
+            bool isFinished = false;
+
+            while (!isFinished)
+            {
+                await ClearPieceAt(gamePieces);
+
+                movingPieces = await CollapseColumn(gamePieces);
+
+                await UniTask.Delay(200);
+
+                matches = FindMatchesAt(movingPieces);
+
+                if (matches.Count == 0)
+                {
+                    isFinished = true;
+                }
+                else
+                {
+                    gamePieces = matches;
+                }
+            }
+        }
+        
+        public async UniTask ClearPieceAt(List<ITilePresenter> gamePieces)
+        {
+            string log = "Clearing pieces: ";
+            var scaleDownTasks = new List<UniTask>();
+            foreach (var piece in gamePieces.Where(piece => piece != null))
+            {
+                log += $"[{piece.GetXIndex()}, {piece.GetYIndex()}]: ${piece.GetTileType()} ";
+                var scaleDownTask = ClearPieceAt(piece.GetXIndex(), piece.GetYIndex());
+                scaleDownTasks.Add(scaleDownTask);
+            }
+            await UniTask.WhenAll(scaleDownTasks);
+            Debug.Log(log);
+        }
+        
+        public async UniTask ClearPieceAt(int x, int y)
+        {
+            var pieceToClear = TileProps[x, y].TilePresenter;
+            if (pieceToClear == null) return;
+            
+            TileProps[x, y] = new TileProp(null, null);
+            await pieceToClear.ScaleDownAsync();
+        }
+        
+        private async UniTask<List<ITilePresenter>> CollapseColumn(List<ITilePresenter> tiles)
+        {
+            var movingPieces = new List<ITilePresenter>();
+            var columnsToCollapse = GetColumns(tiles);
+
             foreach (int column in columnsToCollapse)
             {
-                movingPieces = movingPieces.Union(CollapseColumn(column)).ToList();
+                movingPieces = movingPieces.Union(await CollapseColumn(column)).ToList();
             }
+
+            return movingPieces;
+        }
+        
+        private async UniTask<List<ITilePresenter>> CollapseColumn(int column, float collapseTime = 0.1f)
+        {
+            var movingPieces = new List<ITilePresenter>();
+            
+            var moveDownTasks = new List<UniTask>();
+
+            for (int i = 0; i < Height - 1; i++)
+            {
+                if (TileProps[column, i].TilePresenter == null)
+                {
+                    for (int j = i + 1; j < Height; j++)
+                    {
+                        if (TileProps[column, j].TilePresenter != null)
+                        {
+                            var moveDownTask = TileProps[column, j].TilePresenter.MoveDownAsync(i, collapseTime * (j - i));
+                            moveDownTasks.Add(moveDownTask);
+                            TileProps[column, i] = TileProps[column, j];
+                            TileProps[column, i].TilePresenter.SetPosition(column, i);
+
+                            if (!movingPieces.Contains(TileProps[column, i].TilePresenter))
+                            {
+                                movingPieces.Add(TileProps[column, i].TilePresenter);
+                            }
+
+                            TileProps[column, j] = new TileProp(null, null);
+                            break;
+
+                        }
+                    }
+                }
+            }
+            
+            await UniTask.WhenAll(moveDownTasks);
+            
             return movingPieces;
         }
         

@@ -76,6 +76,11 @@ namespace _Game.Scripts.Presenters
         {
             return _tile.GetPosition();
         }
+        
+        public void SetPosition(int xIndex, int yIndex)
+        {
+            _tile.SetPosition(xIndex, yIndex);
+        }
 
         public async UniTask SwipeToAsync(Vector3 targetPosition, CancellationToken cancellationToken = default)
         {
@@ -87,6 +92,12 @@ namespace _Game.Scripts.Presenters
         public async UniTask ScaleDownAsync(CancellationToken cancellationToken = default)
         {
             await _tileView.ScaleDownAsync(cancellationToken);
+            Release();
+        }
+
+        public async UniTask MoveDownAsync(int newYPosition, float collapseTime, CancellationToken cancellationToken = default)
+        {
+            await _tileView.MoveDownAsync(newYPosition, collapseTime, cancellationToken);
         }
 
         private void CalculateSwipeAngle()
@@ -148,7 +159,11 @@ namespace _Game.Scripts.Presenters
         private void OnEndDrag(PointerEventData eventData)
         {
         }
-
+        
+        public void Release()
+        {
+            _tileView.OnRelease();
+        }
 
         public void Dispose()
         {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using _Game.Scripts.Components;
 using _Game.Scripts.Components.Abstractions;
 using _Game.Scripts.Models;
@@ -97,14 +98,10 @@ namespace _Game.Scripts.Presenters
             }
             else
             {
+                await UniTask.Delay(100);
+                
                 var allMatches = tile1Matches.Union(tile2Matches).ToList();
-                var scaleDownTaskList = new List<UniTask>();
-                foreach (var match in allMatches)
-                {
-                    _board.TileProps[match.GetXIndex(), match.GetYIndex()] = new TileProp(new Tile(), null);
-                    scaleDownTaskList.Add(match.ScaleDownAsync());
-                }
-                await UniTask.WhenAll(scaleDownTaskList);
+                await ClearAndReFillMatchesAsync(allMatches);
             }
             
 
@@ -112,6 +109,72 @@ namespace _Game.Scripts.Presenters
             isSwiping = false;
         }
         
+        private async UniTask RefillBoardAsync(int falseYOffset = 0, float moveTime = 0.1f)
+        {
+            int maxInterations = 100;
+            int iterations = 0;
+
+            var refillTaskList = new List<UniTask>();
+            for (int i = 0; i < _board.Width; i++)
+            {
+                for (int j = 0; j < _board.Height; j++)
+                {
+                    if (_board.TileProps[i, j].TilePresenter == null)
+                    {
+                        var piece = FillRandomAt(i, j, falseYOffset, moveTime);
+                        refillTaskList.Add(piece);
+                        iterations = 0;
+
+                        while (_board.HasMatchOnFill(i, j))
+                        {
+                            _board.ClearPieceAt(i, j);
+                            piece = FillRandomAt(i, j, falseYOffset, moveTime);
+                            refillTaskList.Add(piece);
+                            iterations++;
+
+                            if (iterations >= maxInterations)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            await UniTask.WhenAll(refillTaskList);
+        }
+        
+        private async UniTask<ITilePresenter> FillRandomAt(int x, int y, int falseYOffset = 0, float moveTime = 0.1f)
+        {
+            var tileView = _tilePool.Get();
+            var tile = new Tile();
+            var tilePresenter = new TilePresenter(tileView, tile);
+            _board.TileProps[x, y] = new TileProp(tile, tilePresenter);
+            var tileType = GetTileType(x, y, false);
+            tilePresenter.Initialize(tileType.Item1, tileType.Item2, x, y);
+            tilePresenter.OnSwipeAction += SwipeTiles;
+
+            var tileSlot = _board.TileSlots[x, y];
+            tileView.Transform.position = tileSlot.Transform.position + Vector3.up * falseYOffset;
+
+            await tileView.MoveDownAsync(y, moveTime);
+            return tilePresenter;
+        }
+        
+        private async UniTask ClearAndReFillMatchesAsync(List<ITilePresenter> allMatches)
+        {
+            var matches = allMatches;
+
+            do
+            {
+                await _board.ClearAndCollapseAsync(matches);
+                await RefillBoardAsync(10, 0.5f);
+                matches = _board.FindAllMatches();
+                await UniTask.Delay(500);
+
+            } while (matches.Count != 0);
+        }
+
         private async UniTask ReplaceTilesAsync(ITilePresenter tile1, ITilePresenter tile2)
         {
             var task1 = tile1.SwipeToAsync(tile2.GetPosition());
@@ -195,7 +258,7 @@ namespace _Game.Scripts.Presenters
                     var tile = new Tile();
                     var tilePresenter = new TilePresenter(tileView, tile);
                     _board.TileProps[x, y] = new TileProp(tile, tilePresenter);
-                    var tileType = GetTileType(x, y);
+                    var tileType = GetTileType(x, y, true);
                     tilePresenter.Initialize(tileType.Item1, tileType.Item2, x, y);
                     tilePresenter.OnSwipeAction += SwipeTiles;
 
@@ -205,13 +268,13 @@ namespace _Game.Scripts.Presenters
             }
         }
         
-        private (TileType, string) GetTileType(int x, int y)
+        private (TileType, string) GetTileType(int x, int y, bool isInitial)
         {
             var randomTileType = GetRandomTileType();
 
-            if (IsSameColorAsNeighbours(x, y, randomTileType))
+            if (isInitial && IsSameColorAsNeighbours(x, y, randomTileType))
             {
-                return GetTileType(x, y);
+                return GetTileType(x, y, isInitial);
             }
             else
             {
